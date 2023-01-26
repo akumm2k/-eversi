@@ -6,19 +6,49 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The controller class of the MVC architecture for reversi
+ */
 public final class ReversiController {
 
+    /**
+     * Pattern to match input format
+     */
     private final static Pattern INPUT_PATT = Pattern.compile("(\\d) (\\d)");
 
+    /**
+     * reference to the view singleton of the MVC architecture
+     */
+    private static final ReversiView VIEW = ReversiView.getInstance();
+
+    /**
+     * the controller singleton instance
+     */
     private static final ReversiController INSTANCE = new ReversiController();
+
+    /**
+     * the key used for exiting the game
+     */
     private static final String EXIT_KEY = "q";
 
+    /**
+     * private constructor for singleton behavior
+     */
     private ReversiController() {}
 
+    /**
+     * getter for the singleton instance
+     * @return the controller singleton instance
+     */
     public static ReversiController getInstance() {
         return INSTANCE;
     }
 
+    /**
+     *
+     * @param input the input string
+     * @return the parsed coordinates from the input
+     */
     private Coordinate getInputCoordFrom(final String input) {
         final Matcher inputMatcher = INPUT_PATT.matcher(input);
 
@@ -32,6 +62,11 @@ public final class ReversiController {
         );
     }
 
+    /**
+     * method to start the game with or without an AI agent
+     * @param model the game model representing the game state
+     * @param withAgent a boolean, which is true iff the game is played with an AI agent
+     */
     public void startGameOn(ReversiModel model, boolean withAgent) {
         final ReversiAgent agent = new ReversiAgent(model, 4, -model.getCurrentPlayer());
 
