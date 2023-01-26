@@ -3,9 +3,12 @@ package org.reversi.mvc;
 import java.util.Set;
 
 public final class ReversiView {
-    private final static String POSSIBLE_MOVE_CHAR = String.format("%s%s%s", Color.YELLOW, "*", Color.RESET);
+
+    private final static String POSSIBLE_MOVE_TILE = String.format("%s%s%s", Color.YELLOW, "*", Color.RESET);
+
     private final static String EMPTY_TILE = "_";
-    public final static String[] PLAYER_CHARS = {"x", "o"};
+
+    public final static String[] PLAYER_TILES = {"x", "o"};
 
     private final static ReversiView INSTANCE = new ReversiView();
 
@@ -15,7 +18,7 @@ public final class ReversiView {
     }
 
     private enum Color {
-        RESET("\033[0m"),  // Text Reset
+        RESET("\033[0m"),
 
         @SuppressWarnings("unused")
         RED("\033[0;31m"),
@@ -33,10 +36,10 @@ public final class ReversiView {
         }
     }
 
-    public void printBoard(final ReversiModel model) {
+    public void printBoard(final ReversiModel gameState) {
         // Print the current state of the board to the console
-        final int[][] board = model.getBoard();
-        final Set<Coordinate> possibleMoves = model.getPossibleMoves();
+        final int[][] board = gameState.getBoard();
+        final Set<Coordinate> possibleMoves = gameState.getPossibleMoves();
 
         // print row ids
         System.out.print("  ");
@@ -50,12 +53,12 @@ public final class ReversiView {
                 // print the appropriate tile
 
                 if (possibleMoves.contains(new Coordinate(i, j))) {
-                    System.out.print(POSSIBLE_MOVE_CHAR);
+                    System.out.print(POSSIBLE_MOVE_TILE);
                 } else if (board[i][j] == ReversiModel.EMPTY) {
                     System.out.print(EMPTY_TILE);
                 } else {
                     final int playerID = ReversiModel.getPlayerIndex(board[i][j]);
-                    System.out.print(PLAYER_CHARS[playerID]);
+                    System.out.print(PLAYER_TILES[playerID]);
                 }
 
                 System.out.print(" ");
@@ -74,7 +77,7 @@ public final class ReversiView {
     public void printCurrentPlayer(final int currentPlayer) {
         // Print the current player to the console
         final int playerID = ReversiModel.getPlayerIndex(currentPlayer);
-        System.out.println("Turn: " + PLAYER_CHARS[playerID]);
+        System.out.println("Turn: " + PLAYER_TILES[playerID]);
     }
 
     public void printResult(final ReversiModel model) {
@@ -87,7 +90,7 @@ public final class ReversiView {
         final int playerID = ReversiModel.getPlayerIndex(model.getWinner());
         printBoard(model);
 
-        System.out.println("Winner: " + PLAYER_CHARS[playerID]);
+        System.out.println("Winner: " + PLAYER_TILES[playerID]);
 
     }
 }

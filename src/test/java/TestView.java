@@ -47,14 +47,14 @@ public class TestView {
     void testPlayerPrint() {
         view.printCurrentPlayer(-1);
         assertEquals(
-            String.format("Turn: %s%n", ReversiView.PLAYER_CHARS[0]),
+            String.format("Turn: %s%n", ReversiView.PLAYER_TILES[0]),
             byteArrayOutputStream.toString()
         );
 
         byteArrayOutputStream.reset();
         view.printCurrentPlayer(1);
         assertEquals(
-            String.format("Turn: %s%n", ReversiView.PLAYER_CHARS[1]),
+            String.format("Turn: %s%n", ReversiView.PLAYER_TILES[1]),
             byteArrayOutputStream.toString()
         );
     }
