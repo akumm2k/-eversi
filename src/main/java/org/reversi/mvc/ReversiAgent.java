@@ -4,13 +4,33 @@ import java.util.Objects;
 import java.util.Set;
 
 
+/**
+ * A class for the AI agent for Reversi
+ */
 public class ReversiAgent {
+    /**
+     * the max depth for minimax search
+     */
     private final int depth;
 
+    /**
+     * the game model the agent will play on
+     */
     private final ReversiModel model;
 
+    /**
+     * the player ID the agent takes
+     * @see ReversiModel#PLAYER1
+     * @see ReversiModel#PLAYER2
+     */
     private final int agentID;
 
+    /**
+     * @see ReversiAgent#agentID
+     * @param model the game model the agent will play on
+     * @param depth the max depth for minimax search
+     * @param agentID the player ID the agent takes
+     */
     public ReversiAgent(ReversiModel model, int depth, int agentID) {
         assert agentID == 1 || agentID == -1;
 
@@ -19,6 +39,10 @@ public class ReversiAgent {
         this.depth = depth;
     }
 
+    /**
+     * finds the best move using minimax
+     * @return the best move coordinate
+     */
     public Coordinate findBestMove() {
         int bestScore = Integer.MIN_VALUE;
         Coordinate bestMove = null;
@@ -41,6 +65,15 @@ public class ReversiAgent {
         return bestMove;
     }
 
+    /**
+     * The minimax implementation
+     * @param gameState Reversi model representing the game state
+     * @param currDepth current depth in the minimax search
+     * @param maximizingPlayer boolean to represent if it's the maximizing player's turn
+     * @param alpha the alpha threshold for alpha-beta pruning
+     * @param beta the beta threshold for alpha-beta pruning
+     * @return the score associated with the best branch in the minimax search
+     */
     private int miniMax(ReversiModel gameState, int currDepth, boolean maximizingPlayer, int alpha, int beta) {
         if (currDepth == 0 || gameState.isGameOver()) {
             return evaluate(gameState);
@@ -68,11 +101,21 @@ public class ReversiAgent {
         return bestScore;
     }
 
+    /**
+     * heuristics evaluation of the game state
+     * @param gameState Reversi model representing the game state
+     * @return the heuristic evaluation
+     */
     private int evaluate(final ReversiModel gameState) {
         return countMyPieces(gameState) + countMyCorners(gameState);
     }
 
 
+    /**
+     * counts the number of corners captured by the agent as the corners are valuable.
+     * @param gameState Reversi model representing the game state
+     * @return the heuristic evaluation
+     */
     private int countMyCorners(final ReversiModel gameState) {
         final int stratVal = 1;
 
@@ -88,6 +131,11 @@ public class ReversiAgent {
         return stratVal * cnt;
     }
 
+    /**
+     * counts the number of agent disks.
+     * @param gameState Reversi model representing the game state
+     * @return the heuristic evaluation
+     */
     private int countMyPieces(final ReversiModel gameState) {
         final int stratVal = 1;
         int cnt = 0;
@@ -103,6 +151,11 @@ public class ReversiAgent {
         return stratVal * cnt;
     }
 
+    /**
+     * getter for agentID
+     * @see ReversiAgent#agentID
+     * @return agentID
+     */
     public int getAgentID() {
         return this.agentID;
     }
