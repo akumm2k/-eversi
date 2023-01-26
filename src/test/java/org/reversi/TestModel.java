@@ -1,3 +1,5 @@
+package org.reversi;
+
 import org.reversi.mvc.Coordinate;
 import org.reversi.mvc.ReversiModel;
 
