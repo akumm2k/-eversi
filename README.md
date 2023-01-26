@@ -73,3 +73,18 @@ q
   Turn: o
   q
     ```
+
+## Documentation
+
+* Use IntelliJ directly or `mvn javadoc:javadoc` on the command line to generate the javadoc.
+
+### Program Architecture
+
+- The game is implemented using a Model-View-Controller architecture, such that the user only interacts with the controller.
+- The view and controller are singletons.
+
+### Potential extensions
+
+- A GUI - desktop / web
+- More minimax strategies for the heuristics evaluation
+- Server serving multiple games to users - plus a web application
