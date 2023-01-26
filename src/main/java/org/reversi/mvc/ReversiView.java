@@ -2,12 +2,12 @@ package org.reversi.mvc;
 
 import java.util.Set;
 
-public class ReversiView {
+public final class ReversiView {
     private final static String POSSIBLE_MOVE_CHAR = String.format("%s%s%s", Color.YELLOW, "*", Color.RESET);
     private final static String EMPTY_TILE = "_";
     public final static String[] PLAYER_CHARS = {"x", "o"};
 
-    public final static ReversiView INSTANCE = new ReversiView();
+    private final static ReversiView INSTANCE = new ReversiView();
 
     private ReversiView() {}
     public static ReversiView getInstance() {
