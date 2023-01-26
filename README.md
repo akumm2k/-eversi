@@ -50,3 +50,26 @@ Agent: 2 5
 Turn: o
 q
 ```
+
+## Running instructions
+
+- run `Main::main` from Intellij.
+- Use the following commands:
+    ```
+  > javac src/main/java/org/reversi/**/*.java -d target/classes                                                                                                                                main
+  > java -classpath ./target/classes org.reversi.Main   
+  Welcome to Яeversi
+  Enter q to exit
+  
+      0 1 2 3 4 5 6 7
+  0 _ _ _ _ _ _ _ _
+  1 _ _ _ _ _ _ _ _
+  2 _ _ _ _ * _ _ _
+  3 _ _ _ o x * _ _
+  4 _ _ * x o _ _ _
+  5 _ _ _ * _ _ _ _
+  6 _ _ _ _ _ _ _ _
+  7 _ _ _ _ _ _ _ _
+  Turn: o
+  q
+    ```
