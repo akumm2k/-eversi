@@ -25,7 +25,9 @@ public class ReversiAgent {
      */
     private final int agentID;
 
+
     /**
+     * Constructor for the agent
      * @see ReversiAgent#agentID
      * @param model the game model the agent will play on
      * @param depth the max depth for minimax search
