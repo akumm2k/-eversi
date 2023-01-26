@@ -6,16 +6,14 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ReversiController {
+public final class ReversiController {
 
     private final static Pattern INPUT_PATT = Pattern.compile("(\\d) (\\d)");
-    private final ReversiView view;
+
     private static final ReversiController INSTANCE = new ReversiController();
     private static final String EXIT_KEY = "q";
 
-    private ReversiController() {
-        this.view = ReversiView.getInstance();
-    }
+    private ReversiController() {}
 
     public static ReversiController getInstance() {
         return INSTANCE;
@@ -37,12 +35,12 @@ public class ReversiController {
     public void startGameOn(ReversiModel model, boolean withAgent) {
         final ReversiAgent agent = new ReversiAgent(model, 4, -model.getCurrentPlayer());
 
-        view.welcome(EXIT_KEY);
+        VIEW.welcome(EXIT_KEY);
         try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
             while (!model.isGameOver()) {
                 System.out.println();
-                view.printBoard(model);
-                view.printCurrentPlayer(model.getCurrentPlayer());
+                VIEW.printBoard(model);
+                VIEW.printCurrentPlayer(model.getCurrentPlayer());
 
                 if (withAgent && model.getCurrentPlayer() == agent.getAgentID()) {
                     Coordinate bestMove = agent.findBestMove();
@@ -68,7 +66,7 @@ public class ReversiController {
         }
 
         if (model.isGameOver()) {
-            view.printResult(model);
+            VIEW.printResult(model);
         }
     }
 
