@@ -8,11 +8,19 @@ import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Testing class for the MVC View
+ */
 public class TestView {
 
     private ReversiView view;
     private ReversiModel model;
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    /**
+     * empty constructor
+     */
+    TestView() {}
 
     @BeforeEach
     void initView() {

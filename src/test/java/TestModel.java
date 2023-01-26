@@ -9,10 +9,19 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Testing class for the MVC model
+ */
 public class TestModel {
     private ReversiModel model;
     private static final int PLAYER_X = ReversiModel.PLAYER2;
     private static final int PLAYER_O = ReversiModel.PLAYER1;
+
+    /**
+     * empty constructor
+     */
+    TestModel() {}
+
     @BeforeEach
     void initModel() {
         model = new ReversiModel(4);
@@ -34,7 +43,8 @@ public class TestModel {
     }
 
     private static void testMove(final ReversiModel model,
-                                 final int i, final int j, final boolean print) {
+                                 final int i, final int j,
+                                 @SuppressWarnings("SameParameterValue") final boolean print) {
         model.makeMove(i, j);
         if (print) {
             printBoard(model.getBoard(), model.getPossibleMoves());
@@ -43,10 +53,14 @@ public class TestModel {
         }
     }
 
+    /**
+     * tests the model on a small hardwired game
+     */
     @Test
     public void testModel() {
         final boolean print = false;
 
+        //noinspection ConstantConditions
         if (print) {
             printBoard(model.getBoard(), model.getPossibleMoves());
             System.out.println(model.getPossibleMoves());
