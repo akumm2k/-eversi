@@ -40,9 +40,8 @@ public class ReversiModel {
         this.currentPlayer = -this.currentPlayer;
     }
 
-    private void gatherPossibleMoves(final Set<Coordinate> possibleCoords,
-                                     final int opponent,
-                                     final int row, final int col) {
+    private void addPossibleMovesFrom(final int row, final int col, final int opponent,
+                                      final Set<Coordinate> possibleCoords) {
 
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
@@ -72,7 +71,7 @@ public class ReversiModel {
         for (int i = 0; i < rows; i++)
             for (int j = 0; j < cols; j++)
                 if (this.board[i][j] == player)
-                    this.gatherPossibleMoves(possibleCoords, opponent, i, j);
+                    this.addPossibleMovesFrom(i, j, opponent, possibleCoords);
 
         return possibleCoords;
     }
