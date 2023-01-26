@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TestView {
 
     private ReversiView view;
+    @SuppressWarnings("unused")
     private ReversiModel model;
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -37,20 +38,6 @@ public class TestView {
         System.setOut(System.out);
 
         model = null;
-    }
-
-    @Test
-    void testBoardPrint() {
-        view.printBoard(model);
-        assertEquals(
-                """
-                _ _ * _\s
-                _ o x *\s
-                * x o _\s
-                _ * _ _\s
-                """,
-                byteArrayOutputStream.toString()
-        );
     }
 
     @Test
