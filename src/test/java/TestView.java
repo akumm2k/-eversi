@@ -1,6 +1,3 @@
-package org.reversi.test;
-
-
 import org.reversi.mvc.ReversiModel;
 import org.reversi.mvc.ReversiView;
 import org.junit.jupiter.api.AfterEach;
