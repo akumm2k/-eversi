@@ -91,4 +91,5 @@ q
 
 - A GUI - desktop / web
 - More minimax strategies for the heuristics evaluation
+- Add difficulty levels and modify the minimax heuristics to conform to the selected difficulty level
 - Server serving multiple games to users - plus a web application
