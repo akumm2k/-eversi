@@ -1,7 +1,11 @@
 package org.reversi.mvc;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 
 
 /**
@@ -109,7 +113,42 @@ public class ReversiAgent {
      * @return the heuristic evaluation
      */
     private int evaluate(final ReversiModel gameState) {
-        return countMyPieces(gameState) + countMyCorners(gameState);
+        return countMyCorners(gameState) + countMyPieces(gameState) + endToEndStableOccupation(gameState);
+    }
+
+
+    /**
+     * counts the rows and cols stably - cannot be recaptured - occupied end to end by the agent
+     * @param gameState Reversi model representing the game state
+     * @return the heuristic evaluation
+     */
+    private int endToEndStableOccupation(final ReversiModel gameState) {
+        final int startVal = 100;
+        final int[][] board = gameState.getBoard();
+
+        // count occupied rows
+        final CompletableFuture<Integer> numFullRowsFuture = CompletableFuture.supplyAsync(() ->
+                (int) Arrays.stream(board)
+                .filter(row ->
+                        IntStream.of(row).allMatch(playa -> playa == this.agentID)
+                ).count());
+
+        // count occupied columns
+        final IntFunction<IntStream> toColumnStream = col -> Arrays.stream(board).mapToInt(row -> row[col]);
+        final CompletableFuture<Integer> numFullColsFuture = CompletableFuture.supplyAsync(() ->
+                (int) IntStream.range(0, board.length)
+                .mapToObj(toColumnStream)
+                .filter(col ->
+                        col.allMatch(playa -> playa == this.agentID)
+                ).count());
+
+
+        final CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+                numFullRowsFuture, numFullColsFuture
+        );
+        allFutures.join();
+
+        return startVal * (numFullRowsFuture.join() + numFullColsFuture.join());
     }
 
 
@@ -119,11 +158,11 @@ public class ReversiAgent {
      * @return the heuristic evaluation
      */
     private int countMyCorners(final ReversiModel gameState) {
-        final int stratVal = 1;
+        final int stratVal = 50;
 
         int cnt = 0;
         for (int i: new int[] {0, gameState.getBoard().length - 1}) {
-            for (int j : new int[]{0, gameState.getBoard().length - 1}) {
+            for (int j : new int[] {0, gameState.getBoard().length - 1}) {
                 if (gameState.getBoard()[i][j] == agentID) {
                     cnt++;
                 }
@@ -139,7 +178,7 @@ public class ReversiAgent {
      * @return the heuristic evaluation
      */
     private int countMyPieces(final ReversiModel gameState) {
-        final int stratVal = 1;
+        final int stratVal = 5;
         int cnt = 0;
 
         for (int[] row: gameState.getBoard()) {

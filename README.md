@@ -7,6 +7,10 @@ using minimax with alpha-beta pruning.
 
 - Counting corners
 - Counting disks
+- End to End stable occupation
+
+  The agent prefers scenarios where it has captured entire rows and columns, which obviously can't 
+  be recaptured by the opponent.
 
 ## Example Run
 
