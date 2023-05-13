@@ -58,6 +58,7 @@ public class ReversiModel {
      * represents the number of columns in the board
      */
     final private int cols;
+    final public static int STARTING_PLAYER = PLAYER1;
 
 
     /**
@@ -82,7 +83,27 @@ public class ReversiModel {
         this.board[mid_lo][mid_hi] = PLAYER2;
         this.board[mid_hi][mid_lo] = PLAYER2;
 
-        this.currentPlayer = PLAYER1;
+        this.currentPlayer = STARTING_PLAYER;
+        this.possibleMoves = this.getPossibleMoveCoordsForPlayer(this.currentPlayer);
+    }
+
+    public ReversiModel(final int boardSize,
+                        final int preferredPlayer) {
+        if (boardSize % 2 != 0) {
+            throw new RuntimeException("board size must be divisible by 2");
+        }
+        this.rows = this.cols = boardSize;
+        this.board = new int[rows][cols];
+
+        final int mid_lo = rows / 2 - 1;
+        final int mid_hi = mid_lo + 1;
+
+        this.board[mid_lo][mid_lo] = PLAYER1;
+        this.board[mid_hi][mid_hi] = PLAYER1;
+        this.board[mid_lo][mid_hi] = PLAYER2;
+        this.board[mid_hi][mid_lo] = PLAYER2;
+
+        this.currentPlayer = preferredPlayer;
         this.possibleMoves = this.getPossibleMoveCoordsForPlayer(this.currentPlayer);
     }
 
