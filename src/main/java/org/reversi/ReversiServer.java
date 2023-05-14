@@ -11,88 +11,130 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
-    private final ReversiModel model;
+    private ReversiModel model;
     private final Set<Integer> availablePlayers;
+    private final Map<Integer, ClientRemote> playerToClient = new HashMap<>();
     private final Map<ClientRemote, Integer> clientToPlayer = new HashMap<>();
     private final Set<ClientRemote> connectedClients = new HashSet<>();
+    /**
+     * Pattern to match input format
+     */
+    private final static Pattern INPUT_PATT = Pattern.compile("(\\d) (\\d)");
+
+    @SuppressWarnings("FieldCanBeLocal")
+    private final String EXIT_KEY = "q";
+
     public ReversiServer(ReversiModel model) throws RemoteException {
         this.model = model;
         this.availablePlayers =
                 new HashSet<>(Set.of(ReversiModel.PLAYER1,
                         ReversiModel.PLAYER2));
     }
-    private boolean forfeit = false;
 
-    public synchronized void registerClient(ClientRemote client) throws GameException {
+    private void play() throws RemoteException {
+        for (ClientRemote cl: connectedClients)
+            cl.notify(String.format("Press %s to quit", EXIT_KEY));
+
+        final StringBuilder gameStateStrBuilder = new StringBuilder();
+        while (!model.isGameOver()) {
+            gameStateStrBuilder.setLength(0);
+            gameStateStrBuilder.append("\n");
+
+            View.addTextBoardTo(gameStateStrBuilder, model);
+            final int currPlayer = model.getCurrentPlayer();
+            View.addCurrPlayer(gameStateStrBuilder, currPlayer);
+
+            for (ClientRemote cl: connectedClients) cl.notify(gameStateStrBuilder.toString());
+
+            ClientRemote currClient = playerToClient.get(currPlayer);
+            currClient.notify("Enter Move:");
+            try {
+                final String input = currClient.getInput();
+                if (input.equals(EXIT_KEY)) {
+                    forfeit(currClient);
+                    break;
+                }
+                final Coordinate inputCoords = getInputCoordFrom(input);
+
+                if (!model.makeMove(inputCoords.x(), inputCoords.y())) {
+                    currClient.notify("Invalid move, try again.");
+                }
+            } catch (Exception e) {
+                // ! TODO: Fix closed bufferedReader
+                System.out.println(e.getMessage());
+                currClient.notify("Couldn't make move. Please retry.");
+                break;
+            }
+        }
+    }
+
+
+    /**
+     *
+     * @param input the input string
+     * @return the parsed coordinates from the input
+     */
+    private Coordinate getInputCoordFrom(final String input) {
+        final Matcher inputMatcher = INPUT_PATT.matcher(input);
+
+        if (!inputMatcher.find()) {
+            throw new RuntimeException("Bad input");
+        }
+
+        return new Coordinate(
+                Integer.parseInt(inputMatcher.group(1)),
+                Integer.parseInt(inputMatcher.group(2))
+        );
+    }
+
+    public synchronized void registerClientAndPlay(ClientRemote client) throws GameException, RemoteException {
         if (this.availablePlayers.isEmpty()) {
             throw new GameException("Game server is busy");
         }
 
         int player = availablePlayers.iterator().next();
 
+        playerToClient.put(player, client);
         clientToPlayer.put(client, player);
         availablePlayers.remove(player);
-
         connectedClients.add(client);
-    }
 
-    @Override
-    public int getPlayerID(ClientRemote client) throws RemoteException {
-        return clientToPlayer.get(client);
-    }
+        final String playerTile = View.getTile(player);
+        System.out.println("Adding " + playerTile);
 
-    @Override
-    public synchronized boolean isGameOver() throws RemoteException {
-        return forfeit || model.isGameOver();
-    }
+        client.notify("Assigned tile: " + playerTile);
 
-    @Override
-    public synchronized int getCurrentPlayer() throws RemoteException {
-        return model.getCurrentPlayer();
-    }
-
-    @Override
-    public synchronized Coordinate getOpponentMove(ClientRemote client) throws RemoteException {
-        return null;
-    }
-
-    @Override
-    public synchronized void forfeit(ClientRemote client) throws RemoteException {
-        // TODO: implement forfeit logic after prototype
-        forfeit = true;
-    }
-
-
-    @Override
-    public synchronized boolean makeMove(ClientRemote client, int row,
-                                         int col) throws RemoteException, GameException {
-        // Implement the logic to make a move in the game using the provided row and col
-        // You can delegate the actual move to your existing ReversiController or ReversiModel
-        // For example:
-        if (!connectedClients.contains(client)) {
-            throw new GameException("clientID not found");
+        if (availablePlayers.size() > 0) {
+            client.notify("Waiting for opponent.");
+        } else {
+            for (ClientRemote cl : connectedClients)
+                cl.notify("Fasten your seatbelts. The game begins.");
+            play();
         }
+    }
 
-        if (model.getCurrentPlayer() != clientToPlayer.get(client)) {
-            return false;
+    void restoreGame() {
+        availablePlayers.add(ReversiModel.PLAYER1);
+        availablePlayers.add(ReversiModel.PLAYER2);
+        model = new ReversiModel(8);
+    }
+
+    public void forfeit(final ClientRemote client) throws RemoteException {
+        final String forfeitMsg = String.format(
+                "Player %s forfeited.",
+                View.getTile(clientToPlayer.get(client))
+        );
+        for (ClientRemote cl: connectedClients) {
+            cl.notify(forfeitMsg);
         }
-
-        return model.makeMove(row, col);
+        restoreGame();
     }
 
-    @Override
-    public synchronized int[][] getBoard() throws RemoteException {
-        return model.getBoard();
-    }
 
-    @Override
-    public synchronized int getAvailablePlayers() throws RemoteException {
-        return availablePlayers.size();
-    }
-
-    // Implement other remote methods if needed
     public static void main(String[] args) {
         try {
             // Create an instance of the ReversiModel
@@ -114,4 +156,123 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
             e.printStackTrace();
         }
     }
+
+    private static class View {
+        private View() {}
+
+        public final static String[] PLAYER_TILES = {"x", "o"};
+
+        /**
+         * a colored string to represent a possible / feasible move given a game state
+         */
+        private final static String POSSIBLE_MOVE_TILE =
+                String.format("%s%s%s", Color.YELLOW, "*", Color.RESET);
+        /**
+         * a string to represent an empty tile on the board
+         */
+        private final static String EMPTY_TILE = "_";
+
+        public static void addTextBoardTo(StringBuilder stringBuilder,
+                                          ReversiModel gameState) {
+            final int[][] board = gameState.getBoard();
+            final Set<Coordinate> possibleMoves = gameState.getPossibleMoves();
+
+            // append col IDs
+            stringBuilder.append("  ");
+            for (int i = 0; i < board.length; i++) {
+                final String colID = String.format("%s%d%s ", Color.BLUE, i, Color.RESET);
+                stringBuilder.append(colID);
+            }
+            stringBuilder.append("\n");
+
+            // append rows
+            for (int i = 0; i < board.length; i++) {
+                final String rowID = String.format("%s%d%s ", Color.BLUE, i, Color.RESET);
+                stringBuilder.append(rowID);
+
+                for (int j = 0; j < board.length; j++) {
+                    // print the appropriate tile
+
+                    if (possibleMoves.contains(new Coordinate(i, j))) {
+                        stringBuilder.append(POSSIBLE_MOVE_TILE);
+                    } else if (board[i][j] == ReversiModel.EMPTY) {
+                        stringBuilder.append(EMPTY_TILE);
+                    } else {
+                        final int playerID = ReversiModel.getPlayerIndex(board[i][j]);
+                        stringBuilder.append(PLAYER_TILES[playerID]);
+                    }
+
+                    stringBuilder.append(" ");
+
+                }
+                stringBuilder.append("\n");
+            }
+
+        }
+
+        public static String getTile(final int player) {
+            final int playerIdx = ReversiModel.getPlayerIndex(player);
+            return PLAYER_TILES[playerIdx];
+        }
+
+        public static void addCurrPlayer(final StringBuilder stringBuilder,
+                                         final int currentPlayer) {
+            final int playerIdx =
+                    ReversiModel.getPlayerIndex(currentPlayer);
+            stringBuilder.append("Turn: ")
+                    .append(PLAYER_TILES[playerIdx])
+                    .append("\n");
+        }
+
+        /**
+         * An enum to hold all the colors for displaying strings printed by the View
+         * using ANSI strings
+         * @see <a href="https://en.wikipedia.org/wiki/ANSI_escape_code">ANSI wikipedia</a>
+         */
+        private enum Color {
+            /**
+             * turns off all ANSI attributes set so far, which should return the console to its defaults
+             */
+            RESET("\033[0m"),
+
+            /**
+             * ANSI red
+             */
+            @SuppressWarnings("unused")
+            RED("\033[0;31m"),
+
+            /**
+             * ANSI yellow
+             */
+            YELLOW("\033[0;33m"),
+
+            /**
+             * ANSI blue
+             */
+            BLUE("\033[0;34m");
+
+            /**
+             * string holding the ANSI color code
+             */
+            private final String colorCode;
+
+            /**
+             * The enum constructor
+             * @param colorCode string holding the ANSI color code
+             */
+            Color(final String colorCode) {
+                this.colorCode = colorCode;
+            }
+
+            /**
+             * Overridden toString to directly access color code
+             * @return the enum's colorCode
+             */
+            @Override
+            public String toString() {
+                return colorCode;
+            }
+        }
+    }
+
 }
