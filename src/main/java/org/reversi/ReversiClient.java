@@ -9,15 +9,24 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ReversiClient extends UnicastRemoteObject implements ClientRemote {
 
-    public ReversiClient() throws RemoteException {}
+    private final BufferedReader inputReader;
+    public ReversiClient() throws RemoteException {
+        inputReader = new BufferedReader(new InputStreamReader(System.in));
 
-    public String getInput() throws RemoteException {
-        try (BufferedReader input =
-                     new BufferedReader(new InputStreamReader(System.in))) {
-            return input.readLine();
+        // Register the shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    public void shutdown() {
+        try {
+            inputReader.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+    }
+
+    public String getInput() throws IOException {
+        return inputReader.readLine();
     }
 
     @Override
@@ -25,19 +34,22 @@ public class ReversiClient extends UnicastRemoteObject implements ClientRemote {
         System.out.println(msg);
     }
 
+    @Override
+    public void heartbeat() throws RemoteException {
+        // just send a heartbeat back to the server
+    }
+
 
     public static void main(String[] args) {
-        if (args.length == 1) {
-            try {
-                ClientRemote cl = new ReversiClient();
-                ServerRemote server = (ServerRemote) Naming.lookup("ReversiServer");
-                Naming.rebind(String.format("cl-%s", args[0]), cl);
+        try {
+            ClientRemote cl = new ReversiClient();
+            ServerRemote server = (ServerRemote) Naming.lookup("ReversiServer");
+            String clientID = String.format("cl-%s", server.getAvailableClientId());
+            Naming.rebind(clientID, cl);
+            server.registerClientAndPlay(cl);
 
-                server.registerClientAndPlay(cl);
-
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 

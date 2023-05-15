@@ -1,8 +1,11 @@
 package org.reversi;
 
+import org.junit.platform.commons.logging.Logger;
+import org.junit.platform.commons.logging.LoggerFactory;
 import org.reversi.mvc.Coordinate;
 import org.reversi.mvc.ReversiModel;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -11,15 +14,28 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.reversi.mvc.ReversiModel.DRAW;
+
 public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
+    private final static int DEFAULT_BOARD_SIZE = 4;
     private ReversiModel model;
     private final Set<Integer> availablePlayers;
     private final Map<Integer, ClientRemote> playerToClient = new HashMap<>();
     private final Map<ClientRemote, Integer> clientToPlayer = new HashMap<>();
     private final Set<ClientRemote> connectedClients = new HashSet<>();
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ReversiServer.class);
+
+    private final static long HEARTBEAT_INTERVAL = 10;
+    private Thread inputThread;
+
     /**
      * Pattern to match input format
      */
@@ -40,7 +56,7 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
             cl.notify(String.format("Press %s to quit", EXIT_KEY));
 
         final StringBuilder gameStateStrBuilder = new StringBuilder();
-        while (!model.isGameOver()) {
+        while (!model.isGameOver() && connectedClients.size() == 2) {
             gameStateStrBuilder.setLength(0);
             gameStateStrBuilder.append("\n");
 
@@ -53,7 +69,18 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
             ClientRemote currClient = playerToClient.get(currPlayer);
             currClient.notify("Enter Move:");
             try {
-                final String input = currClient.getInput();
+                final AtomicReference<String> inputRef = new AtomicReference<>();
+                inputThread = new Thread(() -> {
+                    try {
+                        inputRef.set(currClient.getInput());
+                    } catch (IOException e) {
+                        restoreGame();
+                    }
+                });
+                inputThread.start();
+                inputThread.join();
+
+                String input = inputRef.get();
                 if (input.equals(EXIT_KEY)) {
                     forfeit(currClient);
                     break;
@@ -64,10 +91,26 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
                     currClient.notify("Invalid move, try again.");
                 }
             } catch (Exception e) {
-                // ! TODO: Fix closed bufferedReader
-                System.out.println(e.getMessage());
+                LOGGER.error(e, () -> "Couldn't make a move.");
                 currClient.notify("Couldn't make move. Please retry.");
                 break;
+            }
+        }
+        reportEndGame();
+    }
+
+    private void reportEndGame() throws RemoteException {
+        if (model.getWinner() == DRAW) {
+            for (ClientRemote cl : connectedClients) {
+                cl.notify("it is a draw");
+            }
+        } else {
+            for (ClientRemote cl : connectedClients) {
+                String winnerStmt = String.format(
+                        "Player %s won",
+                        View.getTile(model.getWinner())
+                );
+                cl.notify(winnerStmt);
             }
         }
     }
@@ -91,6 +134,12 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
         );
     }
 
+    @Override
+    public int getAvailableClientId() throws RemoteException {
+        // this impl can be more sophisticated. For now, it is simple.
+        return availablePlayers.size();
+    }
+
     public synchronized void registerClientAndPlay(ClientRemote client) throws GameException, RemoteException {
         if (this.availablePlayers.isEmpty()) {
             throw new GameException("Game server is busy");
@@ -104,23 +153,60 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
         connectedClients.add(client);
 
         final String playerTile = View.getTile(player);
-        System.out.println("Adding " + playerTile);
+        LOGGER.info(() -> "Adding " + playerTile);
 
         client.notify("Assigned tile: " + playerTile);
 
         if (availablePlayers.size() > 0) {
             client.notify("Waiting for opponent.");
         } else {
+
             for (ClientRemote cl : connectedClients)
                 cl.notify("Fasten your seatbelts. The game begins.");
-            play();
+
+            try ( ScheduledExecutorService heartbeatExecutor =
+                          Executors.newSingleThreadScheduledExecutor()) {
+
+                heartbeatExecutor.scheduleAtFixedRate(
+                        this::sendHeartbeat, 0,
+                        HEARTBEAT_INTERVAL, TimeUnit.SECONDS
+                );
+
+                play();
+            }
+            restoreGame();
+        }
+    }
+
+    private void sendHeartbeat() {
+        try {
+            for (ClientRemote client : connectedClients) {
+                client.heartbeat();
+            }
+        } catch (RemoteException e) {
+            for (ClientRemote cl: connectedClients) {
+                try {
+                    LOGGER.info(() -> "client disconnected");
+                    cl.notify("a client disconnected.");
+                } catch (RemoteException ignored) {}
+            }
+            restoreGame();
         }
     }
 
     void restoreGame() {
+        LOGGER.info(() -> "restoring game");
+        if (inputThread != null && inputThread.isAlive()) {
+            inputThread.interrupt();
+        }
+        inputThread = null;
+        connectedClients.clear();
+        playerToClient.clear();
+        clientToPlayer.clear();
+
         availablePlayers.add(ReversiModel.PLAYER1);
         availablePlayers.add(ReversiModel.PLAYER2);
-        model = new ReversiModel(8);
+        model = new ReversiModel(DEFAULT_BOARD_SIZE);
     }
 
     public void forfeit(final ClientRemote client) throws RemoteException {
@@ -138,7 +224,7 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
     public static void main(String[] args) {
         try {
             // Create an instance of the ReversiModel
-            ReversiModel model = new ReversiModel(8); // Example: 8x8 board size
+            ReversiModel model = new ReversiModel(DEFAULT_BOARD_SIZE);
 
             // Create the server object
             ServerRemote server = new ReversiServer(model);
@@ -150,10 +236,9 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
             // Bind the server object to the registry
             registry.rebind("ReversiServer", server);
 
-            System.out.println("Reversi server is running...");
+            LOGGER.info(() -> "Reversi server is running...");
         } catch (Exception e) {
-            System.err.println("Error starting the Reversi server: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.error(e, () -> "Error starting the Reversi server. ");
         }
     }
 
