@@ -1,4 +1,5 @@
-package org.reversi;
+package org.reversi.netcli;
+
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.reversi;
+package org.reversi.netcli;
 
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
@@ -140,9 +140,9 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
         return availablePlayers.size();
     }
 
-    public synchronized void registerClientAndPlay(ClientRemote client) throws GameException, RemoteException {
+    public synchronized void registerClientAndPlay(ClientRemote client) throws org.reversi.netcli.GameException, RemoteException {
         if (this.availablePlayers.isEmpty()) {
-            throw new GameException("Game server is busy");
+            throw new org.reversi.netcli.GameException("Game server is busy");
         }
 
         int player = availablePlayers.iterator().next();

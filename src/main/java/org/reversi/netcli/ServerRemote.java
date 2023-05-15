@@ -1,4 +1,4 @@
-package org.reversi;
+package org.reversi.netcli;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
