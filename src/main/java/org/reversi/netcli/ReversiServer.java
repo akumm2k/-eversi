@@ -51,7 +51,7 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
                         ReversiModel.PLAYER2));
     }
 
-    private void play() throws RemoteException {
+    private synchronized void play() throws RemoteException {
         for (ClientRemote cl: connectedClients)
             cl.notify(String.format("Press %s to quit", EXIT_KEY));
 
@@ -140,7 +140,7 @@ public class ReversiServer extends UnicastRemoteObject implements ServerRemote {
         return availablePlayers.size();
     }
 
-    public synchronized void registerClientAndPlay(ClientRemote client) throws org.reversi.netcli.GameException, RemoteException {
+    public void registerClientAndPlay(ClientRemote client) throws GameException, RemoteException {
         if (this.availablePlayers.isEmpty()) {
             throw new org.reversi.netcli.GameException("Game server is busy");
         }
