@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Reversi Game</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.js" ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+  <script th:src="@{/js/script.js}"></script>
+  <script th:src="@{/js/socket.js}"></script>
+</head>
+
+<body>
+<h1 id="main-heading">Reversi Game</h1>
+
+<!-- Login Form -->
+<form id="loginForm" class="form-with-transition">
+  <label class="form-label" for="loginInput">Login:</label>
+  <input class="form-control" type="text" id="loginInput" name="login" required placeholder="required"/>
+
+  <label for="actionSelect" class="form-label">Choose an Action:</label>
+  <select id="actionSelect" name="action" class="form-select form-select-sm" aria-label=".form-select-sm example">
+    <option value="create" selected>Create Game</option>
+    <option value="joinSpecific">Join Specific Game</option>
+    <option value="joinRandom">Join Random Game</option>
+  </select>
+
+
+  <!--  handled by javascript  -->
+  <label class="form-label" for="gameIdInput" style="display: none;">Game ID:</label>
+  <input class="form-control" type="text" id="gameIdInput" name="gameId" style="display: none;" />
+
+  <button class="btn btn-primary" type="submit" onclick="parseGameConfigAndConnect()">Initiate Game</button>
+</form>
+
+<!--TODO: remove thymeleaf gameboard rendering and add javascript rendering-->
+<!-- Render the game board -->
+<table id="gameBoard">
+  <tbody>
+  <!-- Use Thymeleaf iteration to render the rows and cells -->
+  <tr th:each="row, rowStatus : ${game.board}">
+    <td th:each="cell, colStatus : ${row}" class="empty-cell">
+      <div
+          th:attr="data-row=${rowStatus.index},data-col=${colStatus.index}"
+          th:onclick="|makeMove(${rowStatus.index}, ${colStatus.index})|"
+          class="disk-container"
+      >
+      </div>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<div th:if="${game}" id="info-footer" class="text-center">
+  <div style="padding: 25px">Welcome to Reversi. </div>
+</div>
+
+<!-- script to handle gameId for joining a specific game -->
+<script type="application/javascript">
+  const loginInput = document.getElementById("loginInput");
+  const submitButton = document.querySelector("form#loginForm button[type=submit]");
+  submitButton.disabled = loginInput.value.trim() === "";
+  loginInput.addEventListener("keyup", () => {
+    // Disable submit button if the login input is empty
+    submitButton.disabled = loginInput.value.trim() === "";
+  });
+
+  document.getElementById("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+  });
+
+  const actionSelect = document.getElementById("actionSelect");
+  function handleActionChange() {
+    const gameIdInput = document.getElementById("gameIdInput");
+    const gameIdLabel = document.querySelector("label[for=gameIdInput]")
+    if (actionSelect.value === "joinSpecific") {
+      gameIdInput.style.display = "block";
+      gameIdLabel.style.display = "block";
+      gameIdInput.required = true;
+    } else {
+      gameIdInput.style.display = "none";
+      gameIdLabel.style.display = "none";
+      gameIdInput.required = false;
+    }
+  }
+
+  actionSelect.addEventListener("change", handleActionChange);
+
+  // Call the function initially to set the initial state
+  handleActionChange();
+</script>
+</body>
+</html>

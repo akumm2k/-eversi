@@ -1,7 +1,7 @@
 package org.reversi;
 
-import org.reversi.mvc.Coordinate;
-import org.reversi.mvc.ReversiModel;
+import org.reversi.cli.Coordinate;
+import org.reversi.cli.ReversiModel;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;

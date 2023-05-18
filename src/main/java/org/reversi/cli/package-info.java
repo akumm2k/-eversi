@@ -1,4 +1,4 @@
 /**
  * contains the MVC code for Reversi
  */
-package org.reversi.mvc;
+package org.reversi.cli;

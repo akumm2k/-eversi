@@ -1,4 +1,4 @@
-package org.reversi.mvc;
+package org.reversi.cli;
 
 import java.util.Arrays;
 import java.util.Objects;
