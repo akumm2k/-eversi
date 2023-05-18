@@ -131,12 +131,12 @@ function updateFooter(login, disk) {
 
     if (disk === DISK.WHITE) {
         footer.innerHTML =
-            `<div>${login}:</div> 
+            `<div>${login}:</div>
             <div class="white-disk disk-container"></div>
             `;
     } else if (disk === DISK.BLACK) {
         footer.innerHTML =
-            `<div>${login}:</div> 
+            `<div>${login}:</div>
                 <div class="black-disk disk-container"></div>
             `;
     }
