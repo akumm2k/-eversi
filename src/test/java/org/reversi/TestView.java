@@ -1,7 +1,7 @@
 package org.reversi;
 
-import org.reversi.mvc.ReversiModel;
-import org.reversi.mvc.ReversiView;
+import org.reversi.cli.ReversiModel;
+import org.reversi.cli.ReversiView;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

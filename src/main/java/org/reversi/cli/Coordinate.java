@@ -1,4 +1,4 @@
-package org.reversi.mvc;
+package org.reversi.cli;
 
 /**
  * Record to represent a 2D coord

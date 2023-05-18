@@ -1,4 +1,4 @@
-package org.reversi.mvc;
+package org.reversi.cli;
 
 import java.io.BufferedReader;
 import java.io.IOException;

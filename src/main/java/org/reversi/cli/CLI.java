@@ -1,16 +1,13 @@
-package org.reversi;
-
-import org.reversi.mvc.ReversiController;
-import org.reversi.mvc.ReversiModel;
+package org.reversi.cli;
 
 /**
  * The Main class to run the game
  */
-public class Main {
+public class CLI {
     /**
      * Forbidden constructor as Main is a utility class
      */
-    public Main() {
+    public CLI() {
         throw new RuntimeException("Utility class can't be initialized.");
     }
 
