@@ -20,6 +20,7 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 public class GameService {
+    public final static int BOARD_SIZE = 8;
     /**
      * Create game reversi game.
      *
@@ -33,7 +34,7 @@ public class GameService {
 
         // feature: allow client to pick size
         GamePlayer gamePlayer = new GamePlayer(client.login(), Disk.WHITE);
-        game.setBoardWithSize(4);
+        game.setBoardWithSize(BOARD_SIZE);
         game.setGamePlayer1(gamePlayer);
         game.setPossibleMovesFor(gamePlayer);
         game.setCurrentGamePlayer(gamePlayer);
@@ -58,7 +59,7 @@ public class GameService {
         // feature: allow client to pick size
         GamePlayer humanPlayer = new GamePlayer(client.login(), Disk.WHITE);
         GamePlayer agentPlayer = new GamePlayer("AGENT", Disk.BLACK);
-        game.setBoardWithSize(4);
+        game.setBoardWithSize(BOARD_SIZE);
 
         game.setGamePlayer1(humanPlayer);
         game.setGamePlayer2(agentPlayer);

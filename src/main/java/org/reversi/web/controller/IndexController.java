@@ -1,6 +1,7 @@
 package org.reversi.web.controller;
 
 import org.reversi.web.model.ReversiGame;
+import org.reversi.web.services.GameService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ public class IndexController {
     public String index(Model model) {
         // Add the dummy game to the model
         ReversiGame dummyGame = new ReversiGame();
-        dummyGame.setBoardWithSize(4);
+        dummyGame.setBoardWithSize(GameService.BOARD_SIZE);
 
         // allow thymeleaf access to the dummyGame
         model.addAttribute("game", dummyGame);
