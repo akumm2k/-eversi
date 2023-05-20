@@ -57,8 +57,8 @@ public class ReversiAgent {
         final int alpha = Integer.MIN_VALUE;
         final int beta = Integer.MAX_VALUE;
 
-        ReversiModel clonedModel = this.model.getClone();
         for (Coordinate move : moves) {
+            ReversiModel clonedModel = this.model.getClone();
             clonedModel.makeMove(move.x(), move.y());
             int score = miniMax(clonedModel, this.depth - 1, false, alpha, beta);
             if (score > bestScore) {
