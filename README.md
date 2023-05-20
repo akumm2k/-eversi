@@ -107,6 +107,7 @@ q
 ## Reversi Web App
 
 A Java multiplayer implementation of the game [Reversi](https://en.wikipedia.org/wiki/Reversi).
+The implementation also includes the minimax agent from the console application above.
 
 
 ## Usage
