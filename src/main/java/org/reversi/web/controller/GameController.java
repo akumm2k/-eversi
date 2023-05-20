@@ -2,6 +2,7 @@ package org.reversi.web.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reversi.web.controller.dto.AgentMove;
 import org.reversi.web.controller.dto.ConnectRequest;
 import org.reversi.web.exceptions.InvalidGameException;
 import org.reversi.web.exceptions.InvalidParamException;
@@ -34,6 +35,32 @@ public class GameController {
     public ResponseEntity<ReversiGame> start(@RequestBody Client client) {
         log.info("Start game request: {}", client);
         ReversiGame newGame = gameService.createGame(client);
+        return ResponseEntity.ok(newGame);
+    }
+
+    /**
+     * Starting game with agent response entity.
+     *
+     * @param client the client
+     * @return the response entity
+     */
+    @PostMapping("/agent-start")
+    public ResponseEntity<ReversiGame> startWithAgent(@RequestBody Client client) {
+        log.info("Start agent game request: {}", client);
+        ReversiGame newGame = gameService.createGameWithAgent(client);
+        return ResponseEntity.ok(newGame);
+    }
+
+    /**
+     * Agent move response entity.
+     *
+     * @param moveInfo the move info
+     * @return the response entity
+     */
+    @PostMapping("/agent-move")
+    public ResponseEntity<ReversiGame> agentMove(@RequestBody AgentMove moveInfo) {
+        log.info("agent move request made: {}", moveInfo);
+        ReversiGame newGame = gameService.makeAgentMove(moveInfo);
         return ResponseEntity.ok(newGame);
     }
 

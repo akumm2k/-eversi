@@ -20,7 +20,7 @@ public class IndexController {
     public String index(Model model) {
         // Add the dummy game to the model
         ReversiGame dummyGame = new ReversiGame();
-        dummyGame.setBoard(4);
+        dummyGame.setBoardWithSize(4);
 
         // allow thymeleaf access to the dummyGame
         model.addAttribute("game", dummyGame);

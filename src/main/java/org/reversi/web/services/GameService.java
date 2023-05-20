@@ -1,11 +1,13 @@
 package org.reversi.web.services;
 
 import lombok.AllArgsConstructor;
+import org.reversi.web.controller.dto.AgentMove;
 import org.reversi.web.controller.dto.Client;
 import org.reversi.web.controller.dto.Move;
 import org.reversi.web.exceptions.InvalidGameException;
 import org.reversi.web.exceptions.InvalidParamException;
 import org.reversi.web.model.*;
+import org.reversi.web.storage.AgentStorage;
 import org.reversi.web.storage.GameStorage;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +33,7 @@ public class GameService {
 
         // feature: allow client to pick size
         GamePlayer gamePlayer = new GamePlayer(client.login(), Disk.WHITE);
-        game.setBoard(4);
+        game.setBoardWithSize(4);
         game.setGamePlayer1(gamePlayer);
         game.setPossibleMovesFor(gamePlayer);
         game.setCurrentGamePlayer(gamePlayer);
@@ -39,6 +41,53 @@ public class GameService {
 
         GameStorage.getInstance().addGame(game);
 
+        return game;
+    }
+
+    /**
+     * Create reversi game with agent.
+     *
+     * @param client the client
+     * @return the reversi game
+     */
+    public ReversiGame createGameWithAgent(Client client) {
+        ReversiGame game = new ReversiGame();
+        game.setStatus(GameStatus.IN_PROGRESS);
+        game.setGameId(UUID.randomUUID().toString());
+
+        // feature: allow client to pick size
+        GamePlayer humanPlayer = new GamePlayer(client.login(), Disk.WHITE);
+        GamePlayer agentPlayer = new GamePlayer("AGENT", Disk.BLACK);
+        game.setBoardWithSize(4);
+
+        game.setGamePlayer1(humanPlayer);
+        game.setGamePlayer2(agentPlayer);
+
+        game.setPossibleMovesFor(humanPlayer);
+        game.setCurrentGamePlayer(humanPlayer);
+
+        ReversiAgent agent = new ReversiAgent(game, 4, Disk.BLACK);
+        AgentStorage.getInstance().addAgent(agent);
+        GameStorage.getInstance().addGame(game);
+
+        return game;
+    }
+
+    /**
+     * Make agent move in the reversi game.
+     *
+     * @param moveInfo the move info
+     * @return the reversi game
+     */
+    public ReversiGame makeAgentMove(AgentMove moveInfo) {
+        ReversiGame game = GameStorage.getInstance().getGames().get(moveInfo.gameId());
+        ReversiAgent agent = AgentStorage.getInstance().getAgents().get(moveInfo.gameId());
+        Coordinate agentMove = agent.findBestMove();
+
+        game.makeMove(agentMove.x(), agentMove.y());
+
+        AgentStorage.getInstance().addAgent(agent);
+        GameStorage.getInstance().addGame(game);
         return game;
     }
 

@@ -43,7 +43,7 @@ public class ReversiGame {
      *
      * @param size the size
      */
-    public void setBoard(int size) {
+    public void setBoardWithSize(int size) {
         this.size = size;
         this.board = new int[size][size];
         final int mid_lo = size / 2 - 1;
@@ -255,12 +255,45 @@ public class ReversiGame {
     /**
      * getter for winner
      *
-     * @return PLAYER1 or PLAYER2 if a player won else DRAW
-     * @see ReversiGame#winner ReversiGame#winner
+     * @return PLAYER1 or PLAYER2 if a player won else null
+     * @see ReversiGame#winner
      */
     public GamePlayer getWinner() {
         // Check if one player has won the game
         // Return 1 if player 1 has won, -1 if player 2 has won, 0 if the game is a draw
         return this.winner;
+    }
+
+    /**
+     * Gets the clone of the game.
+     * Specifically static because of game object serialization.
+     *
+     * @param game the game to be cloned
+     * @return the clone of that game
+     */
+    public static ReversiGame getClone(ReversiGame game) {
+        ReversiGame clonedModel = new ReversiGame();
+
+        int[][] board = new int[game.getSize()][game.getSize()];
+        for (int i = 0; i < board.length; i++) {
+            System.arraycopy(game.getBoard()[i], 0, board[i], 0, board.length);
+        }
+        clonedModel.setBoard(board);
+        GamePlayer gamePlayer1Clone = game.getGamePlayer1().getClone();
+        GamePlayer gamePlayer2Clone = game.getGamePlayer2().getClone();
+
+        clonedModel.setGamePlayer1(gamePlayer1Clone);
+        clonedModel.setGamePlayer2(gamePlayer2Clone);
+
+        clonedModel.setWinner(game.getWinner() == null ? null: game.getWinner().getClone());
+        clonedModel.setCurrentGamePlayer(game.getCurrentGamePlayer().equals(game.getGamePlayer1()) ? gamePlayer1Clone: gamePlayer2Clone);
+        Set<Coordinate> possibleMovesClone = new HashSet<>(game.getPossibleMoves());
+        clonedModel.setPossibleMoves(possibleMovesClone);
+
+        clonedModel.setStatus(game.getStatus());
+        clonedModel.setSize(game.getBoard().length);
+        clonedModel.setGameId(game.getGameId());
+
+        return clonedModel;
     }
 }

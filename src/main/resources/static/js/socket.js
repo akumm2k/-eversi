@@ -10,7 +10,7 @@ const MSG_BROKER_DEST_PREFIX = `/topic/game-progress`;
 let STOMP_CLIENT;
 let GAME_ID;
 let GAME_STARTED = false;
-
+let WITH_AGENT = false;
 
 /**
  * The connectToSocket function connects to the socket endpoint and subscribes to a topic.
@@ -39,21 +39,34 @@ function connectToSocket(gameId) {
             }
             // TODO: flip only stolen disks
             updateGameBoard(data);
-            if (data.status === "FINISHED") {
-                console.log(data);
-                const heading = document.getElementById("main-heading");
-                const winnerAnnouncement = document.createElement("h2");
-                if (data.winner === null) {
-                    winnerAnnouncement.innerText = "Game Drawn.";
-                } else {
-                    winnerAnnouncement.innerText = `Game over: Winner = ${data.winner.login}`;
-                }
-                heading.after(winnerAnnouncement);
-            }
+            winnerRevealIfPresent(data);
         });
     });
 }
 
+/**
+ * The winnerRevealIfPresent function checks if the game is finished and, if so,
+ * it reveals the winner. If there is no winner (i.e., a draw), then it displays
+ * &quot;Game Drawn.&quot; Otherwise, it displays &quot;Game over: Winner = &lt;winner's login&gt;&quot;.
+
+ *
+ * @param data Get the data from the server
+ *
+ * @return nothing really - it's a void function
+ */
+function winnerRevealIfPresent(data) {
+    if (data.status === "FINISHED") {
+        console.log(data);
+        const heading = document.getElementById("main-heading");
+        const winnerAnnouncement = document.createElement("h2");
+        if (data.winner === null) {
+            winnerAnnouncement.innerText = "Game Drawn.";
+        } else {
+            winnerAnnouncement.innerText = `Game over: Winner = ${data.winner.login}`;
+        }
+        heading.after(winnerAnnouncement);
+    }
+}
 
 /**
  * The function sends a POST request to /game/start with a JSON body containing the login of
@@ -218,11 +231,89 @@ async function makeMove(xCoordinate, yCoordinate) {
             }
         });
         if (response.ok) {
-            const data = await response.json();
-            // board is updated by the socket connection
+            let data = await response.json();
+            // board is updated by the socket connection in case of multiplayer
+            updateGameBoard(data);
+            if (WITH_AGENT === true) {
+                while (data.status !== "FINISHED" && data.currentGamePlayer.login === "AGENT") {
+                    data = await new Promise((resolve, reject) => {
+                        setTimeout(async () => {
+                            resolve(await agentMove());
+                        }, 1200);
+                    });
+                    updateGameBoard(data);
+                }
+                winnerRevealIfPresent(data);
+            }
         }
     } catch (error) {
-        console.log(`Error making a move: ${error}`)
+        console.log(`Error making a move: ${error}`);
+    }
+}
+
+
+/**
+ * The function makes a POST request to /game/agent-move, which will cause the server to make an agent move.
+ *
+ * @return A promise, resolving to the game state after agent's move
+ */
+async function agentMove() {
+    try {
+        const response = await fetch("/game/agent-move", {
+            method: "POST",
+            body: JSON.stringify({
+                "gameId": GAME_ID
+            }),
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        });
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.log(`bad response: ${response}`);
+        }
+    } catch (err) {
+        console.log(`Failed promise: ${err}`);
+    }
+}
+
+/**
+ * The createGameWithAgent function is called when the user initializes the game.
+ * It sends a POST request to /game/agent-start, which creates a new game.
+ * The function then calls updateGameBoard() and updateFooterBothPlayers().
+ *
+ *
+ * @return an empty promise
+ */
+async function createGameWithAgent() {
+    const login = document.getElementById("loginInput").value;
+    if (login === null || login === '') {
+        alert("login missing. Enter your login.");
+    } else {
+        try {
+            const response = await fetch("/game/agent-start", {
+                method: "POST",
+                body: JSON.stringify({"login": login}),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                GAME_ID = data.gameId;
+                // the java enums return a string in the response
+                sessionStorage.setItem(SESSION_PLAYER_KEY, "WHITE");
+                softHideGameConfigPrompts();
+                updateGameBoard(data);
+                updateFooterBothPlayers(data);
+            }
+        } catch (err) {
+            console.log(`Error creating game: ${err}`);
+        }
     }
 }
 
@@ -241,6 +332,9 @@ async function parseGameConfigAndConnect() {
     } else if (gamePreference === "joinSpecific") {
         const gameId = document.getElementById("gameIdInput").value;
         await specificConnect(gameId);
+    } else if (gamePreference === "agent") {
+        WITH_AGENT = true;
+        await createGameWithAgent();
     } else {
         console.log(`Unexpected preference: ${gamePreference}`);
     }

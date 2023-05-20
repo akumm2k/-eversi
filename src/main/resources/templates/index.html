@@ -23,6 +23,7 @@
     <option value="create" selected>Create Game</option>
     <option value="joinSpecific">Join Specific Game</option>
     <option value="joinRandom">Join Random Game</option>
+    <option value="agent" >Play with Agent</option>
   </select>
 
 
@@ -33,8 +34,6 @@
   <button class="btn btn-primary" type="submit" onclick="parseGameConfigAndConnect()">Initiate Game</button>
 </form>
 
-<!--TODO: remove thymeleaf gameboard rendering and add javascript rendering-->
-<!-- Render the game board -->
 <table id="gameBoard">
   <tbody>
   <!-- Use Thymeleaf iteration to render the rows and cells -->
