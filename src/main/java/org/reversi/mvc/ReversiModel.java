@@ -249,7 +249,9 @@ public class ReversiModel {
 
         for (int[] row: this.board) {
             for (int player: row) {
-                occupiedTiles[getPlayerIndex(player)] += 1;
+                if (player != EMPTY) {
+                    occupiedTiles[getPlayerIndex(player)] += 1;
+                }
             }
         }
 
